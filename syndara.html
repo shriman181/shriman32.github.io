@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Syndara — Fleet Intelligence Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800;900&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#04080F;
+  --navy:#08101C;
+  --navy-l:#0D1928;
+  --navy-ll:#12243A;
+  --grid:#14253A;
+  --border:#1C3450;
+  --border-l:#2A4B6B;
+  --amber:#E8A020;
+  --amber-b:#C8841A;
+  --amber-dim:rgba(232,160,32,.12);
+  --amber-glow:rgba(232,160,32,.25);
+  --teal:#00C896;
+  --teal-dim:rgba(0,200,150,.1);
+  --blue:#4A9EFF;
+  --blue-dim:rgba(74,158,255,.1);
+  --red:#E84040;
+  --white:#F2EEE8;
+  --muted:#6A8BAA;
+  --steel:#2A3E54;
+  --f-display:'Barlow Condensed',sans-serif;
+  --f-body:'DM Sans',sans-serif;
+  --f-mono:'JetBrains Mono',monospace;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--void);color:var(--white);font-family:var(--f-body);font-size:16px;line-height:1.6;overflow-x:hidden}
+::selection{background:var(--amber);color:var(--void)}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:var(--f-body)}
+
+/* ─── NOISE OVERLAY ─── */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.4}
+
+/* ─── GRID LINES ─── */
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:60px 60px;opacity:.25;pointer-events:none;z-index:0}
+
+/* ─── NAV ─── */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;transition:background .4s,border-color .4s;border-bottom:1px solid transparent}
+nav.scrolled{background:rgba(4,8,15,.92);backdrop-filter:blur(12px);border-bottom-color:var(--border)}
+.nav-logo{display:flex;align-items:center;gap:10px}
+.nav-logo-mark{width:32px;height:32px;position:relative}
+.nav-logo-mark svg{width:100%;height:100%}
+.nav-logo-text{font-family:var(--f-display);font-weight:800;font-size:22px;letter-spacing:.06em;color:var(--white)}
+.nav-logo-text span{color:var(--amber)}
+.nav-links{display:flex;gap:32px;list-style:none}
+.nav-links a{font-size:13px;font-weight:500;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;transition:color .2s;position:relative}
+.nav-links a::after{content:'';position:absolute;bottom:-2px;left:0;width:0;height:1px;background:var(--amber);transition:width .2s}
+.nav-links a:hover{color:var(--white)}
+.nav-links a:hover::after{width:100%}
+.nav-cta{background:var(--amber);color:var(--void);font-family:var(--f-display);font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;padding:10px 24px;border:none;position:relative;overflow:hidden;transition:background .2s}
+.nav-cta::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,.15);transform:translateX(-100%);transition:transform .3s}
+.nav-cta:hover{background:var(--amber-b)}
+.nav-cta:hover::before{transform:translateX(0)}
+
+/* ─── HERO ─── */
+#hero{position:relative;min-height:100vh;display:flex;align-items:center;overflow:hidden}
+#fleetCanvas{position:absolute;inset:0;width:100%;height:100%;opacity:.85}
+.hero-vignette{position:absolute;inset:0;background:radial-gradient(ellipse 70% 80% at 30% 50%,transparent 40%,rgba(4,8,15,.7) 100%)}
+.hero-content{position:relative;z-index:2;padding:120px 80px 80px;max-width:720px}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:11px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:20px}
+.hero-tag::before{content:'';width:6px;height:6px;background:var(--amber);border-radius:50%;animation:blink 1.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+h1.hero-title{font-family:var(--f-display);font-weight:900;font-size:clamp(64px,9vw,120px);line-height:.92;letter-spacing:-.01em;color:var(--white);margin-bottom:8px}
+h1.hero-title span{color:var(--amber)}
+.hero-sub-title{font-family:var(--f-display);font-weight:300;font-size:clamp(22px,3vw,36px);letter-spacing:.04em;color:var(--muted);margin-bottom:28px}
+.hero-desc{font-size:16px;color:var(--muted);max-width:520px;line-height:1.7;margin-bottom:40px}
+.hero-ctas{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:60px}
+.btn-primary{background:var(--amber);color:var(--void);font-family:var(--f-display);font-weight:700;font-size:15px;letter-spacing:.1em;text-transform:uppercase;padding:14px 36px;border:none;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px var(--amber-glow)}
+.btn-outline{background:transparent;color:var(--white);font-family:var(--f-display);font-weight:700;font-size:15px;letter-spacing:.1em;text-transform:uppercase;padding:13px 36px;border:1px solid var(--border-l);transition:border-color .2s,color .2s}
+.btn-outline:hover{border-color:var(--amber);color:var(--amber)}
+.hero-metrics{display:flex;gap:40px;flex-wrap:wrap}
+.hero-metric{display:flex;flex-direction:column;gap:2px}
+.hero-metric-val{font-family:var(--f-display);font-weight:800;font-size:28px;color:var(--amber)}
+.hero-metric-label{font-family:var(--f-mono);font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.hero-scroll{position:absolute;bottom:32px;left:80px;display:flex;align-items:center;gap:10px;z-index:2}
+.hero-scroll-line{width:40px;height:1px;background:var(--amber);animation:scrollpulse 2s ease-in-out infinite}
+@keyframes scrollpulse{0%,100%{width:40px;opacity:.5}50%{width:60px;opacity:1}}
+.hero-scroll-text{font-family:var(--f-mono);font-size:10px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+
+/* ─── TELEMETRY TICKER ─── */
+.ticker-wrap{background:var(--navy);border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden;position:relative;z-index:10;padding:10px 0}
+.ticker-label{position:absolute;left:0;top:0;bottom:0;background:var(--amber);display:flex;align-items:center;padding:0 18px;z-index:2;font-family:var(--f-mono);font-size:10px;font-weight:500;color:var(--void);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+.ticker-inner{display:flex;animation:tickerScroll 40s linear infinite;padding-left:160px}
+.ticker-item{display:inline-flex;align-items:center;gap:8px;padding:0 24px;white-space:nowrap;font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.ticker-item .dot{width:5px;height:5px;border-radius:50%}
+.ticker-item .dot.ok{background:var(--teal)}
+.ticker-item .dot.warn{background:var(--amber)}
+.ticker-item .dot.alert{background:var(--red);animation:blink .8s infinite}
+.ticker-item .tag{color:var(--blue);font-weight:500}
+.ticker-sep{color:var(--border-l);padding:0 8px}
+@keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ─── SECTION GLOBALS ─── */
+section{position:relative;z-index:1}
+.section-inner{max-width:1200px;margin:0 auto;padding:100px 60px}
+.section-eyebrow{font-family:var(--f-mono);font-size:11px;color:var(--amber);letter-spacing:.14em;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.section-eyebrow::before{content:'';width:24px;height:1px;background:var(--amber)}
+.section-title{font-family:var(--f-display);font-weight:800;font-size:clamp(36px,5vw,58px);line-height:1.0;letter-spacing:-.01em;margin-bottom:20px}
+.section-sub{font-size:16px;color:var(--muted);max-width:560px;line-height:1.7}
+
+/* ─── DIVIDER ─── */
+.road-divider{height:24px;overflow:hidden;position:relative;background:var(--navy);border-top:1px solid var(--border);border-bottom:1px solid var(--border);display:flex;align-items:center}
+.road-divider-inner{display:flex;gap:0;animation:roadScroll 4s linear infinite;white-space:nowrap}
+.road-dash{width:40px;height:3px;background:var(--amber);opacity:.5;margin:0 16px;flex-shrink:0}
+@keyframes roadScroll{0%{transform:translateX(0)}100%{transform:translateX(-112px)}}
+
+/* ─── PROBLEM SECTION ─── */
+#problem{background:var(--navy)}
+.problem-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:2px;margin-top:60px}
+.problem-card{background:var(--navy-l);padding:40px;position:relative;overflow:hidden;transition:background .3s}
+.problem-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:0;background:var(--amber);transition:height .4s}
+.problem-card:hover{background:var(--navy-ll)}
+.problem-card:hover::before{height:100%}
+.problem-num{font-family:var(--f-display);font-weight:900;font-size:80px;line-height:1;color:var(--border);position:absolute;top:20px;right:30px;letter-spacing:-.02em;transition:color .3s}
+.problem-card:hover .problem-num{color:var(--border-l)}
+.problem-icon{width:48px;height:48px;margin-bottom:20px;opacity:.9}
+.problem-head{font-family:var(--f-display);font-weight:700;font-size:24px;letter-spacing:.02em;margin-bottom:12px}
+.problem-body{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:20px}
+.problem-cost{display:inline-flex;align-items:center;gap:8px;background:rgba(232,160,32,.08);border:1px solid rgba(232,160,32,.2);padding:6px 14px;font-family:var(--f-mono);font-size:12px;color:var(--amber)}
+.problem-cost-icon{font-size:14px}
+
+/* ─── PLATFORM SECTION ─── */
+#platform{background:var(--void)}
+.platform-layout{display:grid;grid-template-columns:280px 1fr;gap:2px;margin-top:60px;min-height:600px}
+.platform-tabs{display:flex;flex-direction:column;background:var(--navy);border:1px solid var(--border)}
+.platform-tab{padding:28px 32px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s;position:relative;overflow:hidden}
+.platform-tab::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent;transition:background .2s}
+.platform-tab.active{background:var(--navy-l)}
+.platform-tab.active::after{background:var(--amber)}
+.platform-tab:hover{background:var(--navy-l)}
+.platform-tab-num{font-family:var(--f-mono);font-size:10px;color:var(--muted);letter-spacing:.1em;margin-bottom:6px}
+.platform-tab-name{font-family:var(--f-display);font-weight:700;font-size:18px;letter-spacing:.04em;color:var(--white);transition:color .2s}
+.platform-tab.active .platform-tab-name{color:var(--amber)}
+.platform-tab-tag{font-size:12px;color:var(--muted);margin-top:4px}
+.platform-panel{background:var(--navy-l);border:1px solid var(--border);border-left:none;position:relative;overflow:hidden;display:none}
+.platform-panel.active{display:flex;flex-direction:column}
+.platform-visual{height:280px;position:relative;overflow:hidden;border-bottom:1px solid var(--border);background:var(--navy)}
+.platform-visual canvas,.platform-visual .anim-wrap{position:absolute;inset:0;width:100%;height:100%}
+.platform-info{padding:40px;flex:1}
+.platform-info h3{font-family:var(--f-display);font-weight:800;font-size:32px;letter-spacing:.02em;margin-bottom:12px}
+.platform-info p{font-size:15px;color:var(--muted);line-height:1.7;max-width:600px;margin-bottom:24px}
+.platform-pills{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px}
+.platform-pill{font-family:var(--f-mono);font-size:11px;padding:5px 12px;border:1px solid var(--border-l);color:var(--muted);letter-spacing:.06em}
+.platform-metric{display:flex;align-items:baseline;gap:10px}
+.platform-metric-val{font-family:var(--f-display);font-weight:800;font-size:40px;color:var(--amber)}
+.platform-metric-label{font-size:14px;color:var(--muted)}
+
+/* Module animations */
+/* Telematics: radar */
+.radar-wrap{display:flex;align-items:center;justify-content:center;height:100%}
+.radar{position:relative;width:200px;height:200px}
+.radar-ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(74,158,255,.2)}
+.radar-ring:nth-child(2){inset:25%;border-color:rgba(74,158,255,.3)}
+.radar-ring:nth-child(3){inset:50%;border-color:rgba(74,158,255,.4)}
+.radar-sweep{position:absolute;inset:0;border-radius:50%;overflow:hidden;animation:radarSpin 3s linear infinite}
+.radar-sweep::after{content:'';position:absolute;top:50%;left:50%;width:50%;height:2px;background:linear-gradient(90deg,transparent,rgba(74,158,255,.8));transform-origin:left center;transform:rotate(0)}
+@keyframes radarSpin{to{transform:rotate(360deg)}}
+.radar-dot{position:absolute;width:7px;height:7px;border-radius:50%;transform:translate(-50%,-50%)}
+.radar-dot.amber{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+.radar-dot.teal{background:var(--teal);box-shadow:0 0 8px var(--teal)}
+.radar-crosshair{position:absolute;inset:0}
+.radar-crosshair::before,.radar-crosshair::after{content:'';position:absolute;background:rgba(74,158,255,.15)}
+.radar-crosshair::before{width:1px;height:100%;left:50%}
+.radar-crosshair::after{width:100%;height:1px;top:50%}
+
+/* Driver: speedometer */
+.speedo-wrap{display:flex;align-items:center;justify-content:center;height:100%;gap:40px}
+.speedo{position:relative;width:180px;height:180px}
+.speedo canvas{position:absolute;inset:0}
+.speedo-val{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);text-align:center}
+.speedo-val span{font-family:var(--f-display);font-weight:900;font-size:36px;color:var(--amber)}
+.speedo-val small{display:block;font-family:var(--f-mono);font-size:10px;color:var(--muted);letter-spacing:.08em}
+.driver-score-list{display:flex;flex-direction:column;gap:10px}
+.dscore-row{display:flex;align-items:center;gap:10px}
+.dscore-label{font-family:var(--f-mono);font-size:10px;color:var(--muted);width:90px;letter-spacing:.06em;text-transform:uppercase}
+.dscore-bar{height:4px;flex:1;background:var(--navy);border-radius:2px;overflow:hidden}
+.dscore-fill{height:100%;border-radius:2px;animation:fillBar 1.5s ease-out both}
+@keyframes fillBar{from{width:0}}
+
+/* Volt: battery */
+.volt-wrap{display:flex;align-items:center;justify-content:center;height:100%;gap:50px}
+.battery-grid{display:flex;flex-direction:column;gap:8px}
+.battery-cell{width:160px;height:28px;border:1px solid var(--border-l);position:relative;overflow:hidden;display:flex;align-items:center}
+.battery-cell::before{content:'';position:absolute;left:0;top:0;bottom:0;background:var(--teal);opacity:.7;animation:cellCharge 2s ease-in-out infinite alternate}
+.battery-cell:nth-child(1)::before{width:87%;animation-delay:0s}
+.battery-cell:nth-child(2)::before{width:62%;animation-delay:.2s}
+.battery-cell:nth-child(3)::before{width:94%;animation-delay:.1s}
+.battery-cell:nth-child(4)::before{width:45%;animation-delay:.3s}
+@keyframes cellCharge{to{opacity:1}}
+.battery-cell-label{position:relative;z-index:1;padding:0 8px;font-family:var(--f-mono);font-size:10px;color:rgba(255,255,255,.7);letter-spacing:.06em}
+.volt-savings{display:flex;flex-direction:column;gap:6px}
+.volt-saving-row{display:flex;justify-content:space-between;gap:20px;padding:8px 0;border-bottom:1px solid var(--border)}
+.volt-saving-label{font-family:var(--f-mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.volt-saving-val{font-family:var(--f-mono);font-size:12px;color:var(--teal)}
+
+/* ClaimCore: document */
+.claim-wrap{display:flex;align-items:center;justify-content:center;height:100%;gap:40px}
+.claim-doc{background:var(--navy-ll);border:1px solid var(--border-l);padding:20px;width:200px}
+.claim-doc-line{height:6px;background:var(--border);border-radius:2px;margin-bottom:8px;animation:claimReveal 3s ease-out infinite}
+.claim-doc-line:nth-child(1){width:80%;animation-delay:.3s}
+.claim-doc-line:nth-child(2){width:60%;animation-delay:.6s}
+.claim-doc-line:nth-child(3){width:90%;animation-delay:.9s}
+.claim-doc-line:nth-child(4){width:50%;animation-delay:1.2s}
+.claim-doc-line:nth-child(5){width:75%;animation-delay:1.5s}
+.claim-doc-check{width:40px;height:40px;border:2px solid var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:16px auto 0;animation:checkAppear 3s ease-out infinite}
+@keyframes claimReveal{0%,100%{background:var(--border)}50%{background:var(--amber);opacity:.6}}
+@keyframes checkAppear{0%,60%{opacity:0;transform:scale(0.5)}80%,100%{opacity:1;transform:scale(1)}}
+
+/* ─── STATS ─── */
+#stats{background:var(--navy);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+.stat-item{padding:50px 40px;border-right:1px solid var(--border);position:relative;overflow:hidden}
+.stat-item:last-child{border-right:none}
+.stat-item::before{content:'';position:absolute;inset:0;background:var(--amber-dim);opacity:0;transition:opacity .3s}
+.stat-item:hover::before{opacity:1}
+.stat-val{font-family:var(--f-display);font-weight:900;font-size:clamp(40px,4vw,64px);line-height:1;color:var(--amber);margin-bottom:8px}
+.stat-val span.prefix{font-size:.55em;vertical-align:super}
+.stat-label{font-family:var(--f-mono);font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;line-height:1.5}
+.stat-desc{font-size:13px;color:var(--steel);margin-top:6px}
+
+/* ─── CLAIMCORE SPOTLIGHT ─── */
+#spotlight{background:var(--void)}
+.spotlight-inner{max-width:1200px;margin:0 auto;padding:100px 60px;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.spotlight-badge{display:inline-flex;align-items:center;gap:8px;background:var(--amber-dim);border:1px solid rgba(232,160,32,.3);padding:6px 16px;font-family:var(--f-mono);font-size:11px;color:var(--amber);letter-spacing:.1em;text-transform:uppercase;margin-bottom:24px}
+.spotlight-badge-dot{width:6px;height:6px;background:var(--amber);border-radius:50%;animation:blink 1.5s infinite}
+.spotlight-title{font-family:var(--f-display);font-weight:900;font-size:clamp(36px,4vw,54px);line-height:1;letter-spacing:-.01em;margin-bottom:20px}
+.spotlight-title em{font-style:normal;color:var(--amber)}
+.spotlight-body{font-size:15px;color:var(--muted);line-height:1.8;margin-bottom:32px}
+.spotlight-proof{display:flex;flex-direction:column;gap:16px}
+.proof-item{display:flex;align-items:flex-start;gap:14px;padding:16px;background:var(--navy-l);border:1px solid var(--border)}
+.proof-item-icon{font-size:20px;flex-shrink:0;margin-top:2px}
+.proof-item-text{font-size:14px;color:var(--muted);line-height:1.6}
+.proof-item-text strong{display:block;color:var(--white);font-weight:500;margin-bottom:2px}
+/* Claim flow visual */
+.claim-flow{background:var(--navy-l);border:1px solid var(--border);padding:32px}
+.cf-step{display:flex;align-items:flex-start;gap:16px;padding:20px 0;border-bottom:1px solid var(--border);position:relative}
+.cf-step:last-child{border-bottom:none}
+.cf-num{width:36px;height:36px;background:var(--amber-dim);border:1px solid rgba(232,160,32,.3);display:flex;align-items:center;justify-content:center;font-family:var(--f-display);font-weight:800;font-size:18px;color:var(--amber);flex-shrink:0}
+.cf-content{}
+.cf-title{font-family:var(--f-display);font-weight:700;font-size:18px;letter-spacing:.02em;margin-bottom:4px}
+.cf-desc{font-size:13px;color:var(--muted)}
+.cf-connector{position:absolute;left:18px;top:56px;width:1px;height:calc(100% - 36px);background:rgba(232,160,32,.2)}
+.cf-step:last-child .cf-connector{display:none}
+
+/* ─── MODULES OVERVIEW GRID ─── */
+#modules-overview{background:var(--navy)}
+.modules-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-top:60px;background:var(--border)}
+.mod-card{background:var(--navy-l);padding:32px 28px;position:relative;overflow:hidden;transition:background .3s}
+.mod-card::before{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:transparent;transition:background .3s}
+.mod-card:hover{background:var(--navy-ll)}
+.mod-card.c-teal::before,.mod-card.c-teal:hover::before{background:var(--teal)}
+.mod-card.c-amber::before,.mod-card.c-amber:hover::before{background:var(--amber)}
+.mod-card.c-blue::before,.mod-card.c-blue:hover::before{background:var(--blue)}
+.mod-card.c-red::before,.mod-card.c-red:hover::before{background:var(--red)}
+.mod-icon{width:44px;height:44px;margin-bottom:20px;display:flex;align-items:center;justify-content:center}
+.mod-name{font-family:var(--f-display);font-weight:700;font-size:20px;letter-spacing:.04em;margin-bottom:8px}
+.mod-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px}
+.mod-kpi{font-family:var(--f-mono);font-size:12px;padding:6px 10px;display:inline-block;letter-spacing:.04em}
+.mod-kpi.teal{background:var(--teal-dim);color:var(--teal)}
+.mod-kpi.amber{background:var(--amber-dim);color:var(--amber)}
+.mod-kpi.blue{background:var(--blue-dim);color:var(--blue)}
+.mod-kpi.red{background:rgba(232,64,64,.1);color:var(--red)}
+
+/* ─── FOUNDER/CTA ─── */
+#founder{background:var(--navy-l);border-top:1px solid var(--border)}
+.founder-inner{max-width:1200px;margin:0 auto;padding:100px 60px;display:grid;grid-template-columns:1fr 420px;gap:80px;align-items:center}
+.founder-eyebrow{font-family:var(--f-mono);font-size:11px;color:var(--amber);letter-spacing:.14em;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.founder-eyebrow::before{content:'';width:24px;height:1px;background:var(--amber)}
+.founder-title{font-family:var(--f-display);font-weight:900;font-size:clamp(36px,4vw,56px);line-height:1;letter-spacing:-.01em;margin-bottom:24px}
+.founder-body{font-size:16px;color:var(--muted);line-height:1.8;margin-bottom:40px}
+.founder-sig{display:flex;align-items:center;gap:16px}
+.founder-avatar{width:56px;height:56px;border:2px solid var(--amber);background:var(--amber-dim);display:flex;align-items:center;justify-content:center;font-family:var(--f-display);font-weight:900;font-size:22px;color:var(--amber)}
+.founder-name{font-family:var(--f-display);font-weight:700;font-size:18px;letter-spacing:.04em}
+.founder-role{font-family:var(--f-mono);font-size:11px;color:var(--muted);letter-spacing:.06em;margin-top:2px}
+/* CTA box */
+.cta-box{background:var(--void);border:1px solid var(--border);padding:40px;position:relative;overflow:hidden}
+.cta-box::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--amber),transparent)}
+.cta-box h3{font-family:var(--f-display);font-weight:800;font-size:28px;letter-spacing:.02em;margin-bottom:8px}
+.cta-box p{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:28px}
+.cta-input-wrap{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.cta-input{background:var(--navy-l);border:1px solid var(--border-l);padding:12px 16px;color:var(--white);font-family:var(--f-body);font-size:14px;outline:none;transition:border-color .2s;width:100%}
+.cta-input:focus{border-color:var(--amber)}
+.cta-input::placeholder{color:var(--steel)}
+.cta-btn{width:100%;background:var(--amber);color:var(--void);font-family:var(--f-display);font-weight:800;font-size:15px;letter-spacing:.1em;text-transform:uppercase;padding:14px;border:none;cursor:pointer;transition:background .2s}
+.cta-btn:hover{background:var(--amber-b)}
+.cta-note{font-size:12px;color:var(--muted);text-align:center}
+
+/* ─── FOOTER ─── */
+footer{background:var(--void);border-top:1px solid var(--border);padding:60px}
+.footer-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:280px 1fr 1fr 1fr;gap:60px}
+.footer-brand{}
+.footer-logo{font-family:var(--f-display);font-weight:900;font-size:28px;letter-spacing:.06em;color:var(--white);margin-bottom:12px}
+.footer-logo span{color:var(--amber)}
+.footer-tagline{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px}
+.footer-mono{font-family:var(--f-mono);font-size:11px;color:var(--steel);letter-spacing:.08em}
+.footer-col h4{font-family:var(--f-display);font-weight:700;font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:10px}
+.footer-col li a{font-size:14px;color:var(--steel);transition:color .2s}
+.footer-col li a:hover{color:var(--amber)}
+.footer-bottom{max-width:1200px;margin:40px auto 0;padding-top:24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:gap;gap:16px}
+.footer-copy{font-family:var(--f-mono);font-size:11px;color:var(--steel);letter-spacing:.06em}
+.footer-links{display:flex;gap:24px}
+.footer-links a{font-family:var(--f-mono);font-size:11px;color:var(--steel);letter-spacing:.06em;transition:color .2s}
+.footer-links a:hover{color:var(--amber)}
+
+/* ─── REVEAL ANIMATIONS ─── */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-delay-1{transition-delay:.1s}
+.reveal-delay-2{transition-delay:.2s}
+.reveal-delay-3{transition-delay:.3s}
+.reveal-delay-4{transition-delay:.4s}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--void)}
+::-webkit-scrollbar-thumb{background:var(--border-l)}
+::-webkit-scrollbar-thumb:hover{background:var(--amber)}
+</style>
+</head>
+<body>
+
+<!-- ══════════ NAV ══════════ -->
+<nav id="mainNav">
+  <div class="nav-logo">
+    <div class="nav-logo-mark">
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 16 L16 4 L28 16 L16 28 Z" stroke="#E8A020" stroke-width="1.5" fill="none"/>
+        <path d="M10 16 L16 10 L22 16 L16 22 Z" fill="#E8A020" opacity="0.3"/>
+        <circle cx="16" cy="16" r="3" fill="#E8A020"/>
+        <line x1="16" y1="4" x2="16" y2="28" stroke="#E8A020" stroke-width="0.5" opacity="0.4"/>
+        <line x1="4" y1="16" x2="28" y2="16" stroke="#E8A020" stroke-width="0.5" opacity="0.4"/>
+      </svg>
+    </div>
+    <div class="nav-logo-text">SYND<span>A</span>RA</div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#platform">Platform</a></li>
+    <li><a href="#spotlight">ClaimCore</a></li>
+    <li><a href="#stats">Results</a></li>
+    <li><a href="#founder">About</a></li>
+  </ul>
+  <button class="nav-cta" onclick="document.getElementById('founder').scrollIntoView({behavior:'smooth'})">Request Demo</button>
+</nav>
+
+<!-- ══════════ HERO ══════════ -->
+<section id="hero">
+  <canvas id="fleetCanvas"></canvas>
+  <div class="hero-vignette"></div>
+  <div class="hero-content">
+    <div class="hero-tag">Fleet Intelligence Platform · India</div>
+    <h1 class="hero-title">SYND<span>A</span>RA</h1>
+    <div class="hero-sub-title">From Signal to Decision.</div>
+    <p class="hero-desc">India's first integrated AI command layer for commercial fleets — telematics intelligence, driver coaching, EV charging optimisation, and warranty claim automation. Built for the operators who move India.</p>
+    <div class="hero-ctas">
+      <button class="btn-primary" onclick="document.getElementById('founder').scrollIntoView({behavior:'smooth'})">Request Demo</button>
+      <button class="btn-outline" onclick="document.getElementById('platform').scrollIntoView({behavior:'smooth'})">See Platform →</button>
+    </div>
+    <div class="hero-metrics">
+      <div class="hero-metric">
+        <div class="hero-metric-val">2,000+</div>
+        <div class="hero-metric-label">Vehicles enrolled</div>
+      </div>
+      <div class="hero-metric">
+        <div class="hero-metric-val">₹80L</div>
+        <div class="hero-metric-label">Warranty recovered / fleet</div>
+      </div>
+      <div class="hero-metric">
+        <div class="hero-metric-val">72%</div>
+        <div class="hero-metric-label">Claim approval rate</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <div class="hero-scroll-line"></div>
+    <div class="hero-scroll-text">Scroll to explore</div>
+  </div>
+</section>
+
+<!-- ══════════ TICKER ══════════ -->
+<div class="ticker-wrap">
+  <div class="ticker-label">↑ Live Fleet</div>
+  <div class="ticker-inner" id="tickerInner">
+    <div class="ticker-item"><span class="dot ok"></span><span class="tag">VH-2341</span><span class="ticker-sep">·</span>Route 7A · EV · SOC 87%<span class="ticker-sep">·</span>Mumbai → Pune<span class="ticker-sep">·</span>On schedule</div>
+    <div class="ticker-item"><span class="dot warn"></span><span class="tag">VH-1042</span><span class="ticker-sep">·</span>Brake anomaly detected<span class="ticker-sep">·</span>NH48 · Service in 3 days</div>
+    <div class="ticker-item"><span class="dot teal"></span><span class="tag">DEPOT-B3</span><span class="ticker-sep">·</span>14 vehicles charging · Peak tariff avoided · Saving ₹1,240 tonight</div>
+    <div class="ticker-item"><span class="dot ok"></span><span class="tag">DRV-0892</span><span class="ticker-sep">·</span>Driver score ↑ 8pts this week · Coaching effective</div>
+    <div class="ticker-item"><span class="dot ok"></span><span class="tag">CLM-7741</span><span class="ticker-sep">·</span>Warranty claim approved · ₹84,000 recovered · Tata Motors</div>
+    <div class="ticker-item"><span class="dot alert"></span><span class="tag">VH-3318</span><span class="ticker-sep">·</span>Engine temp anomaly · Auto-claim pre-filed · Dispatch held</div>
+    <div class="ticker-item"><span class="dot ok"></span><span class="tag">VH-0567</span><span class="ticker-sep">·</span>Route 12 · Diesel · Fuel pilferage cleared<span class="ticker-sep">·</span>Variance 1.8%</div>
+    <div class="ticker-item"><span class="dot warn"></span><span class="tag">BATT-EV22</span><span class="ticker-sep">·</span>Battery health 78% · Pre-warranty claim initiated · Mahindra</div>
+  </div>
+</div>
+
+<!-- ══════════ PROBLEM ══════════ -->
+<section id="problem">
+  <div class="section-inner">
+    <div class="section-eyebrow reveal">The Four Failures</div>
+    <h2 class="section-title reveal reveal-delay-1">Your fleet GPS shows<br>what happened.<br><em style="color:var(--amber);font-style:normal">We show what to do.</em></h2>
+    <p class="section-sub reveal reveal-delay-2">Most fleet software is retrospective. Syndara is prescriptive. Every module delivers a ranked action queue, not another dashboard of charts.</p>
+    <div class="problem-grid">
+      <div class="problem-card reveal">
+        <div class="problem-num">01</div>
+        <div class="problem-icon">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
+            <circle cx="24" cy="24" r="20" stroke="#4A9EFF" stroke-width="1" opacity="0.4"/>
+            <circle cx="24" cy="24" r="12" stroke="#4A9EFF" stroke-width="1" opacity="0.6"/>
+            <circle cx="24" cy="24" r="4" fill="#4A9EFF"/>
+            <line x1="24" y1="4" x2="24" y2="14" stroke="#4A9EFF" stroke-width="1.5"/>
+            <line x1="24" y1="34" x2="24" y2="44" stroke="#4A9EFF" stroke-width="1.5"/>
+            <line x1="4" y1="24" x2="14" y2="24" stroke="#4A9EFF" stroke-width="1.5"/>
+            <line x1="34" y1="24" x2="44" y2="24" stroke="#4A9EFF" stroke-width="1.5"/>
+            <circle cx="36" cy="12" r="3" fill="#E84040" opacity="0.9"><animate attributeName="opacity" values="0.9;0.2;0.9" dur="1.2s" repeatCount="indefinite"/></circle>
+          </svg>
+        </div>
+        <div class="problem-head">Telematics: Data rich, insight poor</div>
+        <div class="problem-body">Every AIS-140 fleet has GPS and CAN bus data. But operators receive alerts after failures, not before. Breakdowns are reactive, maintenance is scheduled by calendar not by vehicle health, and four systems hold data that never talks to each other.</div>
+        <div class="problem-cost"><span class="problem-cost-icon">₹</span>12–18% vehicle uptime lost to unplanned breakdowns</div>
+      </div>
+      <div class="problem-card reveal reveal-delay-1">
+        <div class="problem-num">02</div>
+        <div class="problem-icon">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
+            <path d="M24 44 C12 44 6 34 6 24 A18 18 0 0 1 42 24 C42 34 36 44 24 44Z" stroke="#E8A020" stroke-width="1" opacity="0.4" fill="none"/>
+            <path d="M24 44 L24 6" stroke="#E8A020" stroke-width="0.5" opacity="0.3"/>
+            <path d="M6 24 L42 24" stroke="#E8A020" stroke-width="0.5" opacity="0.3"/>
+            <line x1="24" y1="24" x2="34" y2="16" stroke="#E8A020" stroke-width="2.5" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 24 24" to="360 24 24" dur="4s" repeatCount="indefinite"/></line>
+            <circle cx="24" cy="24" r="3" fill="#E8A020"/>
+          </svg>
+        </div>
+        <div class="problem-head">Driver scoring: Punitive, not prescriptive</div>
+        <div class="problem-body">Existing products output a score from 1 to 100. Drivers get fined or fired. No coaching system, no contextual adjustment, no behaviour change. Accident rates stay high, tyre wear costs stay invisible, and union relations deteriorate.</div>
+        <div class="problem-cost"><span class="problem-cost-icon">₹</span>₹15,000–40,000 cost to replace each trained driver lost</div>
+      </div>
+      <div class="problem-card reveal reveal-delay-2">
+        <div class="problem-num">03</div>
+        <div class="problem-icon">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
+            <rect x="10" y="8" width="28" height="36" rx="3" stroke="#00C896" stroke-width="1.2" opacity="0.5" fill="none"/>
+            <rect x="18" y="5" width="12" height="5" rx="2" fill="#00C896" opacity="0.7"/>
+            <rect x="13" y="24" width="22" height="0" rx="1" fill="#00C896" opacity="0.8"><animate attributeName="height" values="0;16;0" dur="2s" repeatCount="indefinite" begin="0s"/><animate attributeName="y" values="40;24;40" dur="2s" repeatCount="indefinite" begin="0s"/></rect>
+            <line x1="13" y1="40" x2="35" y2="40" stroke="#00C896" stroke-width="1" opacity="0.5"/>
+            <line x1="13" y1="32" x2="35" y2="32" stroke="#00C896" stroke-width="0.5" stroke-dasharray="2 3" opacity="0.4"/>
+          </svg>
+        </div>
+        <div class="problem-head">EV charging: Unoptimised, expensive</div>
+        <div class="problem-body">Fleet operators with EVs manage charging the way they managed diesel — ad hoc. Vehicles charge at peak tariff hours. Batteries deep-discharge regularly. Charge levels don't match tomorrow's route schedule. Energy costs run 25–35% above minimum.</div>
+        <div class="problem-cost"><span class="problem-cost-icon">₹</span>₹8–12L/year wasted on bad charge timing per 100-vehicle depot</div>
+      </div>
+      <div class="problem-card reveal reveal-delay-3">
+        <div class="problem-num">04</div>
+        <div class="problem-icon">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
+            <rect x="8" y="8" width="32" height="38" rx="3" stroke="#E84040" stroke-width="1.2" opacity="0.5" fill="none"/>
+            <line x1="14" y1="18" x2="34" y2="18" stroke="#8A9BB0" stroke-width="1.5" opacity="0.5"/>
+            <line x1="14" y1="24" x2="34" y2="24" stroke="#8A9BB0" stroke-width="1.5" opacity="0.5"/>
+            <line x1="14" y1="30" x2="28" y2="30" stroke="#8A9BB0" stroke-width="1.5" opacity="0.5"/>
+            <path d="M30 32 L38 40" stroke="#E84040" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M38 32 L30 40" stroke="#E84040" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="problem-head">Warranty claims: Denied, delayed, lost</div>
+        <div class="problem-body">OEM dealers deny 35–50% of legitimate warranty claims citing "driver misuse" or "out-of-spec operation." Operators have no continuous telemetry evidence to counter the claim. Documentation is scattered across WhatsApp and handwritten records.</div>
+        <div class="problem-cost"><span class="problem-cost-icon">₹</span>₹40–80L/year in valid claims lost per 500-vehicle fleet</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="road-divider"><div class="road-divider-inner" id="roadDivider"></div></div>
+
+<!-- ══════════ PLATFORM (INTERACTIVE) ══════════ -->
+<section id="platform">
+  <div class="section-inner" style="padding-bottom:0">
+    <div class="section-eyebrow reveal">The Syndara Platform</div>
+    <h2 class="section-title reveal reveal-delay-1">Four modules.<br>One command layer.</h2>
+    <p class="section-sub reveal reveal-delay-2">Each module is intelligent alone. Together, they share data — and make each other smarter.</p>
+  </div>
+  <div style="max-width:1200px;margin:0 auto;padding:40px 60px 100px">
+    <div class="platform-layout reveal">
+      <!-- Tabs -->
+      <div class="platform-tabs">
+        <div class="platform-tab active" data-panel="0">
+          <div class="platform-tab-num">MODULE 01</div>
+          <div class="platform-tab-name">Telematics Intelligence</div>
+          <div class="platform-tab-tag">Predict · Route · Monitor</div>
+        </div>
+        <div class="platform-tab" data-panel="1">
+          <div class="platform-tab-num">MODULE 02</div>
+          <div class="platform-tab-name">Driver Intelligence</div>
+          <div class="platform-tab-tag">Coach · Score · Retain</div>
+        </div>
+        <div class="platform-tab" data-panel="2">
+          <div class="platform-tab-num">MODULE 03</div>
+          <div class="platform-tab-name">Volt Intelligence</div>
+          <div class="platform-tab-tag">Charge · Optimise · Protect</div>
+        </div>
+        <div class="platform-tab" data-panel="3">
+          <div class="platform-tab-num">MODULE 04</div>
+          <div class="platform-tab-name">ClaimCore</div>
+          <div class="platform-tab-tag">File · Recover · Defend</div>
+        </div>
+      </div>
+      <!-- Panels -->
+      <div>
+        <!-- Telematics -->
+        <div class="platform-panel active" data-panel="0">
+          <div class="platform-visual" style="background:var(--void)">
+            <canvas id="telemCanvas"></canvas>
+          </div>
+          <div class="platform-info">
+            <h3>Telematics Intelligence</h3>
+            <p>LSTM-powered predictive maintenance flags failures 14–21 days before they happen. Every vehicle gets a live health score. Your action queue tells you what to do today, this week, this month — ranked by cost-avoidance impact.</p>
+            <div class="platform-pills">
+              <span class="platform-pill">AIS-140 Integration</span>
+              <span class="platform-pill">CAN Bus Analytics</span>
+              <span class="platform-pill">Predictive Maintenance</span>
+              <span class="platform-pill">Fuel Pilferage Detect</span>
+            </div>
+            <div class="platform-metric">
+              <div class="platform-metric-val">18%</div>
+              <div class="platform-metric-label">reduction in unplanned breakdowns within 90 days</div>
+            </div>
+          </div>
+        </div>
+        <!-- Driver -->
+        <div class="platform-panel" data-panel="1">
+          <div class="platform-visual">
+            <div class="anim-wrap speedo-wrap">
+              <div class="speedo">
+                <canvas id="speedoCanvas" width="180" height="180"></canvas>
+                <div class="speedo-val"><span id="speedoVal">84</span><small>Driver score</small></div>
+              </div>
+              <div class="driver-score-list">
+                <div class="dscore-row"><div class="dscore-label">Braking</div><div class="dscore-bar"><div class="dscore-fill" style="width:88%;background:var(--teal)"></div></div></div>
+                <div class="dscore-row"><div class="dscore-label">Cornering</div><div class="dscore-bar"><div class="dscore-fill" style="width:72%;background:var(--amber)"></div></div></div>
+                <div class="dscore-row"><div class="dscore-label">Speed</div><div class="dscore-bar"><div class="dscore-fill" style="width:91%;background:var(--teal)"></div></div></div>
+                <div class="dscore-row"><div class="dscore-label">Idle</div><div class="dscore-bar"><div class="dscore-fill" style="width:65%;background:var(--amber)"></div></div></div>
+                <div class="dscore-row"><div class="dscore-label">Night</div><div class="dscore-bar"><div class="dscore-fill" style="width:78%;background:var(--blue)"></div></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="platform-info">
+            <h3>Driver Intelligence</h3>
+            <p>12-dimension driver profiles. Real-time in-cab audio coaching at the moment of the event. WhatsApp-native weekly personalised videos — no app download needed. Supervisors get an intervention queue ranked by safety risk and improvement likelihood.</p>
+            <div class="platform-pills">
+              <span class="platform-pill">12-Dimension Profile</span>
+              <span class="platform-pill">WhatsApp Coaching</span>
+              <span class="platform-pill">Supervisor Queue</span>
+              <span class="platform-pill">UBI Insurance Feed</span>
+            </div>
+            <div class="platform-metric">
+              <div class="platform-metric-val">25%</div>
+              <div class="platform-metric-label">fewer accidents within 6 months of deployment</div>
+            </div>
+          </div>
+        </div>
+        <!-- Volt -->
+        <div class="platform-panel" data-panel="2">
+          <div class="platform-visual">
+            <div class="anim-wrap volt-wrap">
+              <div>
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">Tonight's charge schedule</div>
+                <div class="battery-grid">
+                  <div class="battery-cell"><div class="battery-cell-label">VH-01 · 87% → 90% · 23:00</div></div>
+                  <div class="battery-cell"><div class="battery-cell-label">VH-02 · 62% → 85% · 22:30</div></div>
+                  <div class="battery-cell"><div class="battery-cell-label">VH-03 · 94% → Hold · –</div></div>
+                  <div class="battery-cell"><div class="battery-cell-label">VH-04 · 45% → 80% · 01:00</div></div>
+                </div>
+              </div>
+              <div class="volt-savings">
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">Depot savings tonight</div>
+                <div class="volt-saving-row"><div class="volt-saving-label">Tariff saved</div><div class="volt-saving-val">₹1,840</div></div>
+                <div class="volt-saving-row"><div class="volt-saving-label">Peak avoided</div><div class="volt-saving-val">6–10 PM</div></div>
+                <div class="volt-saving-row"><div class="volt-saving-label">Grid load</div><div class="volt-saving-val">Within cap</div></div>
+                <div class="volt-saving-row"><div class="volt-saving-label">Batt health</div><div class="volt-saving-val">Protected</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="platform-info">
+            <h3>Volt Intelligence</h3>
+            <p>A MILP-powered charging orchestration engine that integrates route schedule, real-time tariff forecasts, per-battery health models, and depot energy capacity. Generates a daily charging plan by 6 PM. Fleet operator approves with one tap or it runs automatically.</p>
+            <div class="platform-pills">
+              <span class="platform-pill">OCPP Integration</span>
+              <span class="platform-pill">Tariff Forecasting</span>
+              <span class="platform-pill">Battery Health Models</span>
+              <span class="platform-pill">Demand Response</span>
+            </div>
+            <div class="platform-metric">
+              <div class="platform-metric-val">35%</div>
+              <div class="platform-metric-label">reduction in energy cost per km, measurable in 60 days</div>
+            </div>
+          </div>
+        </div>
+        <!-- ClaimCore -->
+        <div class="platform-panel" data-panel="3">
+          <div class="platform-visual">
+            <div class="anim-wrap claim-wrap">
+              <div class="claim-doc">
+                <div style="font-family:var(--f-mono);font-size:9px;color:var(--amber);letter-spacing:.1em;margin-bottom:14px;text-transform:uppercase">Claim Package · Auto-generated</div>
+                <div class="claim-doc-line"></div>
+                <div class="claim-doc-line"></div>
+                <div class="claim-doc-line"></div>
+                <div class="claim-doc-line"></div>
+                <div class="claim-doc-line"></div>
+                <div class="claim-doc-check">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10 L8 14 L16 6" stroke="#00C896" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">Evidence packet includes</div>
+                <div style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px"><span style="color:var(--teal)">✓</span> 30-day operating history</div>
+                <div style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px"><span style="color:var(--teal)">✓</span> Maintenance compliance record</div>
+                <div style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px"><span style="color:var(--teal)">✓</span> Failure mode analysis</div>
+                <div style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px"><span style="color:var(--teal)">✓</span> OEM warranty clause citation</div>
+                <div style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px"><span style="color:var(--teal)">✓</span> Dealer counter-evidence</div>
+              </div>
+            </div>
+          </div>
+          <div class="platform-info">
+            <h3>ClaimCore — Warranty AI</h3>
+            <p>When a vehicle fails, Syndara auto-assembles a warranty claim package with the last 30 days of operating parameters, a maintenance compliance certificate, and a failure mode analysis showing the failure is mechanical — not driver abuse. Filed automatically.</p>
+            <div class="platform-pills">
+              <span class="platform-pill">Auto Claim Packages</span>
+              <span class="platform-pill">Denial Counter-Filing</span>
+              <span class="platform-pill">OEM Warranty DB</span>
+              <span class="platform-pill">15% Success Fee Only</span>
+            </div>
+            <div class="platform-metric">
+              <div class="platform-metric-val">72%</div>
+              <div class="platform-metric-label">claim approval rate vs. 50–65% industry average</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ STATS ══════════ -->
+<section id="stats">
+  <div class="section-inner" style="padding:0">
+    <div class="stats-grid">
+      <div class="stat-item reveal">
+        <div class="stat-val"><span class="prefix"></span><span class="counter" data-target="2000" data-suffix="+">0</span></div>
+        <div class="stat-label">Vehicles monitored</div>
+        <div class="stat-desc">Across logistics, last-mile & corporate fleets</div>
+      </div>
+      <div class="stat-item reveal reveal-delay-1">
+        <div class="stat-val"><span class="prefix">₹</span><span class="counter" data-target="80" data-suffix="L">0</span></div>
+        <div class="stat-label">Warranty recovered / fleet / year</div>
+        <div class="stat-desc">Average for a 500-vehicle mixed fleet</div>
+      </div>
+      <div class="stat-item reveal reveal-delay-2">
+        <div class="stat-val"><span class="counter" data-target="35" data-suffix="%">0</span></div>
+        <div class="stat-label">Energy cost reduction</div>
+        <div class="stat-desc">EV fleet, measurable in 60 days via Volt Intelligence</div>
+      </div>
+      <div class="stat-item reveal reveal-delay-3">
+        <div class="stat-val"><span class="prefix">₹</span><span class="counter" data-target="1800" data-suffix="">0</span></div>
+        <div class="stat-label">Per vehicle per month</div>
+        <div class="stat-desc">All 4 modules. No hardware lock-in. Annual contract.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="road-divider" style="border-top-color:var(--border);border-bottom-color:var(--border)"><div class="road-divider-inner" id="roadDivider2"></div></div>
+
+<!-- ══════════ CLAIMCORE SPOTLIGHT ══════════ -->
+<section id="spotlight">
+  <div class="spotlight-inner">
+    <div>
+      <div class="spotlight-badge reveal"><div class="spotlight-badge-dot"></div>The Trojan Horse</div>
+      <h2 class="spotlight-title reveal reveal-delay-1">The first module<br>that pays for<br><em>itself</em> in 30 days.</h2>
+      <p class="spotlight-body reveal reveal-delay-2">ClaimCore is our entry offer. A 90-day pilot — free subscription, 10% success fee on claims recovered. Fleet operators see ₹ on the screen before the quarter is over. Then the full platform conversation starts.</p>
+      <div class="spotlight-proof reveal reveal-delay-3">
+        <div class="proof-item">
+          <div class="proof-item-icon">📋</div>
+          <div class="proof-item-text"><strong>35–50% of valid warranty claims are denied today</strong>Dealers cite "driver misuse" or "out-of-spec operation" — claims operators have no systematic way to counter without continuous telemetry evidence.</div>
+        </div>
+        <div class="proof-item">
+          <div class="proof-item-icon">⚡</div>
+          <div class="proof-item-text"><strong>Syndara auto-assembles the counter-evidence</strong>30-day operating history, maintenance compliance record, failure mode analysis. All generated automatically when the DTC fires — before the vehicle even reaches the dealer.</div>
+        </div>
+        <div class="proof-item">
+          <div class="proof-item-icon">📈</div>
+          <div class="proof-item-text"><strong>72% approval rate vs. 50–65% industry average</strong>Every denied claim we counter-file builds our warranty outcome corpus — making the next fleet's approval rate higher. A data flywheel no competitor can replicate.</div>
+        </div>
+      </div>
+    </div>
+    <div class="claim-flow reveal reveal-delay-2">
+      <div style="font-family:var(--f-mono);font-size:11px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:10px"><span style="display:block;width:20px;height:1px;background:var(--amber)"></span>Claim journey</div>
+      <div class="cf-step">
+        <div class="cf-connector"></div>
+        <div class="cf-num">1</div>
+        <div class="cf-content">
+          <div class="cf-title">Vehicle fails / DTC fires</div>
+          <div class="cf-desc">Syndara captures the exact failure event with timestamp, location, and operating parameters.</div>
+        </div>
+      </div>
+      <div class="cf-step">
+        <div class="cf-connector"></div>
+        <div class="cf-num">2</div>
+        <div class="cf-content">
+          <div class="cf-title">Evidence package auto-assembled</div>
+          <div class="cf-desc">30-day telemetry history, maintenance records, failure mode analysis — in minutes, not days.</div>
+        </div>
+      </div>
+      <div class="cf-step">
+        <div class="cf-connector"></div>
+        <div class="cf-num">3</div>
+        <div class="cf-content">
+          <div class="cf-title">Claim filed with OEM</div>
+          <div class="cf-desc">Pre-formatted submission with the relevant warranty clause cited. Tata, Mahindra, Ashok Leyland, Eicher.</div>
+        </div>
+      </div>
+      <div class="cf-step">
+        <div class="cf-connector"></div>
+        <div class="cf-num">4</div>
+        <div class="cf-content">
+          <div class="cf-title">Denial? Counter-filed in 24 hrs</div>
+          <div class="cf-desc">RPM profile, temperature range, load cycles — specific data refuting the misuse allegation.</div>
+        </div>
+      </div>
+      <div class="cf-step">
+        <div class="cf-num" style="background:rgba(0,200,150,.15);border-color:rgba(0,200,150,.4);color:var(--teal)">✓</div>
+        <div class="cf-content">
+          <div class="cf-title" style="color:var(--teal)">Claim approved. ₹ recovered.</div>
+          <div class="cf-desc">Syndara invoices 15% success fee within 30 days of settlement. Zero cost until you receive money.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ MODULES QUICK OVERVIEW ══════════ -->
+<section id="modules-overview">
+  <div class="section-inner">
+    <div class="modules-grid reveal">
+      <div class="mod-card c-teal">
+        <div class="mod-icon">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="16" stroke="#4A9EFF" stroke-width="1" opacity="0.5"/><circle cx="20" cy="20" r="8" stroke="#4A9EFF" stroke-width="1" opacity="0.7"/><circle cx="20" cy="20" r="3" fill="#4A9EFF"/></svg>
+        </div>
+        <div class="mod-name">Telematics Intelligence</div>
+        <div class="mod-desc">Predictive maintenance, route optimisation, fuel pilferage detection, fleet health scores. Action queues, not charts.</div>
+        <div class="mod-kpi teal">↓ 18% unplanned breakdowns</div>
+      </div>
+      <div class="mod-card c-amber">
+        <div class="mod-icon">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><path d="M20 36 C10 36 5 27 5 20 A15 15 0 0 1 35 20 C35 27 30 36 20 36Z" stroke="#E8A020" stroke-width="1" opacity="0.5" fill="none"/><line x1="20" y1="20" x2="29" y2="13" stroke="#E8A020" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="20" r="2" fill="#E8A020"/></svg>
+        </div>
+        <div class="mod-name">Driver Intelligence</div>
+        <div class="mod-desc">12-dimension profiles, real-time in-cab coaching, WhatsApp weekly briefings, supervisor intervention queues.</div>
+        <div class="mod-kpi amber">↓ 25% accidents in 6 months</div>
+      </div>
+      <div class="mod-card c-blue">
+        <div class="mod-icon">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><rect x="10" y="7" width="20" height="28" rx="3" stroke="#00C896" stroke-width="1" opacity="0.5" fill="none"/><rect x="15" y="4" width="10" height="5" rx="2" fill="#00C896" opacity="0.6"/><rect x="12" y="26" width="16" height="6" rx="1" fill="#00C896" opacity="0.6"/></svg>
+        </div>
+        <div class="mod-name">Volt Intelligence</div>
+        <div class="mod-desc">Daily charging plans, battery health monitoring, range prediction, depot orchestration, demand response participation.</div>
+        <div class="mod-kpi blue">↓ 35% energy cost per km</div>
+      </div>
+      <div class="mod-card c-red">
+        <div class="mod-icon">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><rect x="8" y="6" width="24" height="30" rx="3" stroke="#E8A020" stroke-width="1" opacity="0.5" fill="none"/><line x1="13" y1="15" x2="27" y2="15" stroke="#8A9BB0" stroke-width="1.5"/><line x1="13" y1="21" x2="27" y2="21" stroke="#8A9BB0" stroke-width="1.5"/><line x1="13" y1="27" x2="22" y2="27" stroke="#8A9BB0" stroke-width="1.5"/><circle cx="31" cy="30" r="6" fill="#E8A020" opacity="0.9"/><path d="M28.5 30 L30.5 32 L33.5 28" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="mod-name">ClaimCore</div>
+        <div class="mod-desc">Auto-generated warranty claim packages, denial counter-filing, OEM warranty database, 15% success fee model.</div>
+        <div class="mod-kpi amber">72% claim approval rate</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ FOUNDER / CTA ══════════ -->
+<section id="founder">
+  <div class="founder-inner">
+    <div>
+      <div class="founder-eyebrow reveal">Built for Indian Fleets</div>
+      <h2 class="founder-title reveal reveal-delay-1">Fleets that move<br>India deserve<br>intelligence<br>that moves with them.</h2>
+      <p class="founder-body reveal reveal-delay-2">India's express logistics sector is projected to hit ₹18,000 crore by FY30. The fleets carrying that load are running on four disconnected dashboards, reactive service records, and warranty claims that get denied because they can't prove the vehicle was operated within spec. Syndara was built to end that.</p>
+      <div class="founder-sig reveal reveal-delay-3">
+        <div class="founder-avatar">PC</div>
+        <div>
+          <div class="founder-name">Pranshu Chourasia</div>
+          <div class="founder-role">Founder, Syndara · Fleet Intelligence Platform</div>
+        </div>
+      </div>
+    </div>
+    <div class="cta-box reveal reveal-delay-2">
+      <div style="font-family:var(--f-mono);font-size:10px;color:var(--amber);letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="width:16px;height:1px;display:block;background:var(--amber)"></span>Request Demo</div>
+      <h3>See Syndara<br>on your fleet.</h3>
+      <p>Book a 30-minute command view of your fleet data. We'll run a ClaimCore audit on your active warranty disputes — no commitment, no cost.</p>
+      <div class="cta-input-wrap">
+        <input class="cta-input" type="text" placeholder="Fleet size (e.g. 250 vehicles)">
+        <input class="cta-input" type="email" placeholder="Work email address">
+        <input class="cta-input" type="text" placeholder="Company name">
+      </div>
+      <button class="cta-btn">Book Command View →</button>
+      <div class="cta-note" style="margin-top:12px">Pilot offer: 90 days, zero subscription fee, ClaimCore success fee only.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ FOOTER ══════════ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="footer-logo">SYND<span>A</span>RA</div>
+      <div class="footer-tagline">India's sovereign-grade fleet intelligence platform. From signal to decision.</div>
+      <div class="footer-mono">EST. 2025 · INDIA</div>
+    </div>
+    <div class="footer-col">
+      <h4>Platform</h4>
+      <ul>
+        <li><a href="#">Telematics Intelligence</a></li>
+        <li><a href="#">Driver Intelligence</a></li>
+        <li><a href="#">Volt Intelligence</a></li>
+        <li><a href="#">ClaimCore</a></li>
+        <li><a href="#">Fleet Commander</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="#">About Syndara</a></li>
+        <li><a href="#">Pranshu Chourasia</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Press</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Resources</h4>
+      <ul>
+        <li><a href="#">Warranty Recovery Guide</a></li>
+        <li><a href="#">EV Fleet Handbook</a></li>
+        <li><a href="#">AIS-140 Integration</a></li>
+        <li><a href="#">Pricing</a></li>
+        <li><a href="#">API Docs</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2025 Syndara Technologies Pvt. Ltd. · CIN: U72900MH2025PTC000000</div>
+    <div class="footer-links">
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Service</a>
+      <a href="#">Data Processing Agreement</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ═══ NAV SCROLL ═══ */
+const nav=document.getElementById('mainNav');
+window.addEventListener('scroll',()=>{nav.classList.toggle('scrolled',window.scrollY>40)});
+
+/* ═══ TICKER DUPLICATION ═══ */
+const ti=document.getElementById('tickerInner');
+ti.innerHTML+=ti.innerHTML;
+
+/* ═══ ROAD DIVIDER ═══ */
+['roadDivider','roadDivider2'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(!el)return;
+  let s='';
+  for(let i=0;i<60;i++)s+='<div class="road-dash"></div>';
+  el.innerHTML=s+s;
+});
+
+/* ═══ FLEET CANVAS HERO ═══ */
+(function(){
+  const canvas=document.getElementById('fleetCanvas');
+  const ctx=canvas.getContext('2d');
+  let W,H,vehicles=[],depots=[],routes=[];
+  
+  function resize(){
+    W=canvas.width=canvas.offsetWidth;
+    H=canvas.height=canvas.offsetHeight;
+    buildScene();
+  }
+  
+  function pt(nx,ny){return{x:nx*W,y:ny*H}}
+  
+  function buildScene(){
+    routes=[
+      {pts:[pt(.02,.48),pt(.2,.32),pt(.5,.38),pt(.98,.44)],col:'rgba(232,160,32,0.5)',width:1.5},
+      {pts:[pt(.02,.48),pt(.2,.32),pt(.5,.38),pt(.98,.44)],col:'rgba(232,160,32,0.15)',width:3},
+      {pts:[pt(.38,.02),pt(.35,.35),pt(.42,.65),pt(.4,.98)],col:'rgba(74,158,255,0.4)',width:1.2},
+      {pts:[pt(.38,.02),pt(.35,.35),pt(.42,.65),pt(.4,.98)],col:'rgba(74,158,255,0.1)',width:2.5},
+      {pts:[pt(.08,.82),pt(.28,.55),pt(.58,.35),pt(.88,.18)],col:'rgba(0,200,150,0.35)',width:1},
+      {pts:[pt(.08,.82),pt(.28,.55),pt(.58,.35),pt(.88,.18)],col:'rgba(0,200,150,0.1)',width:2},
+      {pts:[pt(.6,.08),pt(.78,.22),pt(.82,.72),pt(.6,.88)],col:'rgba(232,160,32,0.25)',width:1},
+      {pts:[pt(.98,.44),pt(.85,.55),pt(.7,.6),pt(.6,.88)],col:'rgba(74,158,255,0.2)',width:1},
+      {pts:[pt(.4,.38),pt(.5,.48),pt(.6,.5)],col:'rgba(232,160,32,0.3)',width:1},
+      {pts:[pt(.4,.38),pt(.3,.5),pt(.25,.65)],col:'rgba(74,158,255,0.2)',width:.8},
+    ];
+    
+    depots=[
+      {x:.02,y:.48,r:6,col:'rgba(232,160,32,0.9)',label:'Mumbai'},
+      {x:.38,y:.02,r:5,col:'rgba(74,158,255,0.9)',label:'Delhi'},
+      {x:.88,y:.18,r:5,col:'rgba(0,200,150,0.9)',label:'Kolkata'},
+      {x:.4,y:.98,r:5,col:'rgba(74,158,255,0.8)',label:'Chennai'},
+      {x:.6,y:.88,r:4,col:'rgba(232,160,32,0.7)',label:'Blr'},
+      {x:.98,y:.44,r:4,col:'rgba(0,200,150,0.7)',label:'Hyd'},
+      {x:.4,y:.48,r:3,col:'rgba(232,160,32,0.6)',label:'Hub'},
+    ];
+    depots=depots.map(d=>({...d,x:d.x*W,y:d.y*H,pulse:Math.random()*Math.PI*2}));
+    
+    vehicles=[];
+    const configs=[
+      {ri:0,t:.0,spd:.0008,type:'truck',col:'#E8A020'},{ri:0,t:.35,spd:.0006,type:'truck',col:'#E8A020'},
+      {ri:0,t:.7,spd:.001,type:'ev',col:'#00C896'},{ri:2,t:.1,spd:.0007,type:'ev',col:'#00C896'},
+      {ri:2,t:.6,spd:.0009,type:'truck',col:'#E8A020'},{ri:4,t:.0,spd:.0008,type:'ev',col:'#00C896'},
+      {ri:4,t:.5,spd:.0006,type:'truck',col:'#E8A020'},{ri:6,t:.2,spd:.0009,type:'ev',col:'#00C896'},
+      {ri:6,t:.7,spd:.0007,type:'truck',col:'#E8A020'},{ri:7,t:.3,spd:.001,type:'ev',col:'#00C896'},
+      {ri:8,t:.0,spd:.0012,type:'truck',col:'#4A9EFF'},{ri:9,t:.5,spd:.0011,type:'ev',col:'#00C896'},
+    ];
+    vehicles=configs.map(c=>({...c,trail:[]}));
+  }
+  
+  function bezier(pts,t){
+    if(pts.length===4){
+      const mt=1-t;
+      return{
+        x:mt*mt*mt*pts[0].x+3*mt*mt*t*pts[1].x+3*mt*t*t*pts[2].x+t*t*t*pts[3].x,
+        y:mt*mt*mt*pts[0].y+3*mt*mt*t*pts[1].y+3*mt*t*t*pts[2].y+t*t*t*pts[3].y
+      };
+    }else if(pts.length===3){
+      const mt=1-t;
+      return{
+        x:mt*mt*pts[0].x+2*mt*t*pts[1].x+t*t*pts[2].x,
+        y:mt*mt*pts[0].y+2*mt*t*pts[1].y+t*t*pts[2].y
+      };
+    }
+    return pts[0];
+  }
+
+  function drawRoute(r){
+    if(r.pts.length<2)return;
+    ctx.beginPath();
+    ctx.moveTo(r.pts[0].x,r.pts[0].y);
+    if(r.pts.length===4)ctx.bezierCurveTo(r.pts[1].x,r.pts[1].y,r.pts[2].x,r.pts[2].y,r.pts[3].x,r.pts[3].y);
+    else if(r.pts.length===3)ctx.quadraticCurveTo(r.pts[1].x,r.pts[1].y,r.pts[2].x,r.pts[2].y);
+    ctx.strokeStyle=r.col;
+    ctx.lineWidth=r.width;
+    ctx.stroke();
+  }
+
+  function drawDepot(d,t){
+    const pr=d.r+(Math.sin(d.pulse+t*.02)*1.5);
+    [3,2,1].forEach((i,idx)=>{
+      ctx.beginPath();
+      ctx.arc(d.x,d.y,pr+(idx*8),0,Math.PI*2);
+      ctx.strokeStyle=d.col.replace('0.9',String(.25-idx*.08)).replace('0.8',String(.22-idx*.07)).replace('0.7',String(.2-idx*.06)).replace('0.6',String(.18-idx*.05));
+      ctx.lineWidth=.5;
+      ctx.stroke();
+    });
+    ctx.beginPath();
+    ctx.arc(d.x,d.y,pr,0,Math.PI*2);
+    ctx.fillStyle=d.col;
+    ctx.fill();
+  }
+
+  function drawVehicle(v,pos,prevPos){
+    const trailLen=v.trail.length;
+    if(trailLen>1){
+      for(let i=1;i<trailLen;i++){
+        const a=(i/trailLen)*0.4;
+        ctx.beginPath();
+        ctx.moveTo(v.trail[i-1].x,v.trail[i-1].y);
+        ctx.lineTo(v.trail[i].x,v.trail[i].y);
+        ctx.strokeStyle=v.col.replace('#','rgba(').replace('E8A020','232,160,32,'+a+')').replace('00C896','0,200,150,'+a+')').replace('4A9EFF','74,158,255,'+a+')');
+        ctx.lineWidth=1.5;
+        ctx.stroke();
+      }
+    }
+    if(!prevPos)prevPos=pos;
+    const ang=Math.atan2(pos.y-prevPos.y,pos.x-prevPos.x);
+    ctx.save();
+    ctx.translate(pos.x,pos.y);
+    ctx.rotate(ang);
+    ctx.beginPath();
+    ctx.moveTo(6,0);
+    ctx.lineTo(-4,3);
+    ctx.lineTo(-4,-3);
+    ctx.closePath();
+    ctx.fillStyle=v.col;
+    ctx.shadowColor=v.col;
+    ctx.shadowBlur=8;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  let frame=0;
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    
+    // Grid
+    ctx.strokeStyle='rgba(20,37,58,0.6)';
+    ctx.lineWidth=.5;
+    const gs=Math.min(W,H)/12;
+    for(let x=0;x<W;x+=gs){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+    for(let y=0;y<H;y+=gs){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+    
+    // Routes
+    routes.forEach(r=>drawRoute(r));
+    
+    // Depots
+    depots.forEach(d=>drawDepot(d,frame));
+    
+    // Vehicles
+    vehicles.forEach(v=>{
+      const r=routes[v.ri];
+      if(!r)return;
+      const pos=bezier(r.pts,v.t);
+      const prevPos=v.prevPos||pos;
+      v.trail.push({x:pos.x,y:pos.y});
+      if(v.trail.length>20)v.trail.shift();
+      drawVehicle(v,pos,prevPos);
+      v.prevPos={...pos};
+      v.t+=v.spd;
+      if(v.t>1){v.t=0;v.trail=[];}
+    });
+    
+    frame++;
+    requestAnimationFrame(draw);
+  }
+  
+  resize();
+  window.addEventListener('resize',resize);
+  draw();
+})();
+
+/* ═══ TELEMATICS MINI CANVAS ═══ */
+(function(){
+  const canvas=document.getElementById('telemCanvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  let W,H,miniVehicles=[],frame=0;
+  
+  function resize(){W=canvas.width=canvas.offsetWidth;H=canvas.height=canvas.offsetHeight;init()}
+  
+  const miniRoutes=[
+    [{x:.05,y:.5},{x:.3,y:.35},{x:.7,y:.55},{x:.95,y:.45}],
+    [{x:.4,y:.05},{x:.38,y:.4},{x:.42,y:.7},{x:.4,y:.95}],
+    [{x:.1,y:.85},{x:.35,y:.55},{x:.65,y:.35},{x:.9,y:.15}],
+  ];
+  
+  function init(){
+    miniVehicles=[
+      {ri:0,t:.1,spd:.003,col:'#E8A020',trail:[]},
+      {ri:0,t:.6,spd:.002,col:'#00C896',trail:[]},
+      {ri:1,t:.3,spd:.0025,col:'#4A9EFF',trail:[]},
+      {ri:2,t:.0,spd:.0028,col:'#E8A020',trail:[]},
+      {ri:2,t:.5,spd:.0022,col:'#00C896',trail:[]},
+    ];
+  }
+  
+  function bz(pts,t){
+    const mt=1-t;
+    const ax=pts[0].x*W,ay=pts[0].y*H,bx=pts[1].x*W,by=pts[1].y*H,cx=pts[2].x*W,cy=pts[2].y*H,dx=pts[3].x*W,dy=pts[3].y*H;
+    return{x:mt*mt*mt*ax+3*mt*mt*t*bx+3*mt*t*t*cx+t*t*t*dx,y:mt*mt*mt*ay+3*mt*mt*t*by+3*mt*t*t*cy+t*t*t*dy};
+  }
+  
+  function drawMini(){
+    ctx.clearRect(0,0,W,H);
+    // bg grid
+    ctx.strokeStyle='rgba(20,37,58,0.7)';ctx.lineWidth=.4;
+    for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+    for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+    // routes
+    miniRoutes.forEach((pts,i)=>{
+      const cols=['rgba(232,160,32,0.3)','rgba(74,158,255,0.3)','rgba(0,200,150,0.25)'];
+      ctx.beginPath();ctx.moveTo(pts[0].x*W,pts[0].y*H);
+      ctx.bezierCurveTo(pts[1].x*W,pts[1].y*H,pts[2].x*W,pts[2].y*H,pts[3].x*W,pts[3].y*H);
+      ctx.strokeStyle=cols[i];ctx.lineWidth=1.5;ctx.stroke();
+    });
+    // alert marker
+    const ax=W*.7,ay=H*.55;
+    const pr=4+(Math.sin(frame*.08)*2);
+    [2].forEach(i=>{ctx.beginPath();ctx.arc(ax,ay,pr+i*8,0,Math.PI*2);ctx.strokeStyle=`rgba(232,64,64,${.3-i*.1})`;ctx.lineWidth=.8;ctx.stroke()});
+    ctx.beginPath();ctx.arc(ax,ay,pr,0,Math.PI*2);ctx.fillStyle='#E84040';ctx.fill();
+    // vehicles
+    miniVehicles.forEach(v=>{
+      const r=miniRoutes[v.ri];
+      const pos=bz(r,v.t);
+      const prev=v.prev||pos;
+      v.trail.push({x:pos.x,y:pos.y});
+      if(v.trail.length>12)v.trail.shift();
+      v.trail.forEach((p,i)=>{
+        if(i===0)return;
+        ctx.beginPath();ctx.moveTo(v.trail[i-1].x,v.trail[i-1].y);ctx.lineTo(p.x,p.y);
+        const a=(i/v.trail.length)*.5;
+        ctx.strokeStyle=v.col+(a<.1?'18':a<.2?'33':a<.3?'55':a<.4?'88':'BB');ctx.lineWidth=1;ctx.stroke();
+      });
+      const ang=Math.atan2(pos.y-prev.y,pos.x-prev.x);
+      ctx.save();ctx.translate(pos.x,pos.y);ctx.rotate(ang);
+      ctx.beginPath();ctx.moveTo(5,0);ctx.lineTo(-3,2.5);ctx.lineTo(-3,-2.5);ctx.closePath();
+      ctx.fillStyle=v.col;ctx.shadowColor=v.col;ctx.shadowBlur=6;ctx.fill();
+      ctx.restore();
+      v.prev={...pos};v.t+=v.spd;if(v.t>1){v.t=0;v.trail=[];}
+    });
+    frame++;requestAnimationFrame(drawMini);
+  }
+  resize();window.addEventListener('resize',resize);drawMini();
+})();
+
+/* ═══ SPEEDOMETER CANVAS ═══ */
+(function(){
+  const c=document.getElementById('speedoCanvas');if(!c)return;
+  const ctx=c.getContext('2d');
+  let score=84,target=84,frame=0;
+  function draw(){
+    ctx.clearRect(0,0,180,180);
+    const cx=90,cy=90,r=75;
+    const startA=Math.PI*.75,endA=Math.PI*.25+Math.PI*2;
+    // bg arc
+    ctx.beginPath();ctx.arc(cx,cy,r,startA,endA);
+    ctx.strokeStyle='rgba(26,45,66,0.8)';ctx.lineWidth=8;ctx.lineCap='round';ctx.stroke();
+    // value arc
+    const prog=(score/100);
+    const valEnd=startA+(endA-startA)*prog;
+    const col=score>75?'#00C896':score>50?'#E8A020':'#E84040';
+    ctx.beginPath();ctx.arc(cx,cy,r,startA,valEnd);
+    ctx.strokeStyle=col;ctx.lineWidth=8;ctx.lineCap='round';ctx.stroke();
+    // tick marks
+    for(let i=0;i<=10;i++){
+      const a=startA+(endA-startA)*(i/10);
+      const ir=r-14,or=r-8;
+      ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*ir,cy+Math.sin(a)*ir);ctx.lineTo(cx+Math.cos(a)*or,cy+Math.sin(a)*or);
+      ctx.strokeStyle='rgba(42,78,107,0.8)';ctx.lineWidth=1;ctx.stroke();
+    }
+    // needle
+    const na=startA+(endA-startA)*prog;
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(na);
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(52,0);ctx.strokeStyle=col;ctx.lineWidth=2;ctx.lineCap='round';ctx.stroke();
+    ctx.restore();
+    ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+    // update score
+    if(Math.abs(score-target)<.5){
+      setTimeout(()=>{target=60+Math.floor(Math.random()*35);},2000);
+    }
+    score+=(target-score)*.03;
+    const el=document.getElementById('speedoVal');if(el)el.textContent=Math.round(score);
+    frame++;requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ═══ PLATFORM TABS ═══ */
+document.querySelectorAll('.platform-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    const idx=tab.dataset.panel;
+    document.querySelectorAll('.platform-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.platform-panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelector(`.platform-panel[data-panel="${idx}"]`).classList.add('active');
+  });
+});
+
+/* ═══ SCROLL REVEAL ═══ */
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')});
+},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+/* ═══ STAT COUNTERS ═══ */
+const counterObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting&&!e.target.classList.contains('counted')){
+      e.target.classList.add('counted');
+      const target=parseInt(e.target.dataset.target);
+      const suffix=e.target.dataset.suffix||'';
+      const dur=2000;const start=performance.now();
+      function update(now){
+        const p=Math.min((now-start)/dur,1);
+        const ease=1-Math.pow(1-p,3);
+        const val=Math.round(ease*target);
+        e.target.textContent=val.toLocaleString('en-IN')+suffix;
+        if(p<1)requestAnimationFrame(update);
+      }
+      requestAnimationFrame(update);
+    }
+  });
+},{threshold:.5});
+document.querySelectorAll('.counter').forEach(el=>counterObs.observe(el));
+
+/* ═══ HERO STAGGER REVEAL ═══ */
+setTimeout(()=>{
+  document.querySelectorAll('.hero-content > *').forEach((el,i)=>{
+    el.style.opacity='0';el.style.transform='translateY(20px)';el.style.transition='opacity .7s ease, transform .7s ease';
+    el.style.transitionDelay=`${i*0.1}s`;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.opacity='1';el.style.transform='translateY(0)'}));
+  });
+},100);
+</script>
+</body>
+</html>
